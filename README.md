@@ -130,7 +130,14 @@ Buka **SQL Editor** di dashboard Supabase.
 
 **Cara cepat (disarankan):** copy seluruh isi
 [`supabase/PASANG-SEMUA.sql`](supabase/PASANG-SEMUA.sql), tempel, lalu **Run**.
-File itu berisi gabungan seluruh migrasi dalam urutan yang benar.
+File itu berisi gabungan seluruh migrasi dalam urutan yang benar, ditutup
+tabel pemeriksaan hasil yang langsung tampil setelah dijalankan.
+
+Baris pertama keluarannya mencetak **versi skrip**, misalnya
+`Elite Squad Tracker — versi skrip: 6a4127f9`. Cocokkan dengan versi di
+header file. Kalau berbeda, yang tereksekusi adalah salinan lama dari cache
+browser — muat ulang paksa (Cmd/Ctrl + Shift + R) atau ambil lewat URL
+yang memuat commit SHA, bukan nama branch.
 
 **Cara manual:** jalankan satu per satu, berurutan:
 
