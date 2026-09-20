@@ -13,12 +13,20 @@ const envSchema = z.object({
     .string()
     .min(20, "NEXT_PUBLIC_SUPABASE_ANON_KEY tidak valid / belum diisi"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
+  /**
+   * Hanya dipakai di server, untuk satu hal: menghapus akun peserta dari panel
+   * mentor (Supabase Admin API tidak bisa dipanggil dengan anon key).
+   * Opsional — tanpa ini aplikasi tetap jalan, fitur hapus akun saja yang mati.
+   * JANGAN diberi awalan NEXT_PUBLIC_: key ini tidak boleh sampai ke browser.
+   */
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
 });
 
 const parsed = envSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });
 
 if (!parsed.success) {

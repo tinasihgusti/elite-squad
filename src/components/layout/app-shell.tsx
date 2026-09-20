@@ -5,7 +5,11 @@ import type { ProfileRow } from "@/lib/database.types";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/tracker", label: "Isi Tracker" },
+  { href: "/amalan", label: "Amalan Yaumi" },
+  { href: "/misi", label: "Misi & Modul" },
+  { href: "/drama", label: "Maba Drama" },
+  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/tracker", label: "Tracker" },
   { href: "/rekap", label: "Rekap" },
 ];
 
@@ -16,6 +20,9 @@ export function AppShell({
   profile: ProfileRow;
   children: React.ReactNode;
 }) {
+  const isStaff = profile.role === "mentor" || profile.role === "admin";
+  const navItems = isStaff ? [...NAV, { href: "/admin", label: "Panel Mentor" }] : NAV;
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -47,7 +54,7 @@ export function AppShell({
           aria-label="Navigasi utama"
           className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-3 pb-2"
         >
-          {NAV.map((item) => (
+          {navItems.map((item) => (
             <NavLink key={item.href} href={item.href}>
               {item.label}
             </NavLink>
