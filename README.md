@@ -120,9 +120,18 @@ npm install
 ### 2. Buat project Supabase
 
 1. Buka [supabase.com/dashboard](https://supabase.com/dashboard) → **New project**.
-2. Setelah project jadi, masuk **Project Settings → API** dan salin:
-   - `Project URL`
-   - `anon public` key
+2. Setelah project jadi, masuk **Project Settings → API Keys** dan salin:
+
+   | Yang dibutuhkan | Nama di dashboard | Bentuk |
+   | --- | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (menu **General**) | `https://<ref>.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Publishable key** — atau `anon public` pada project lama | `sb_publishable_...` / `eyJ...` |
+   | `SUPABASE_SERVICE_ROLE_KEY` (opsional) | **Secret key** — atau `service_role` pada project lama | `sb_secret_...` / `eyJ...` |
+
+   **Jangan tertukar.** Publishable key aman dibawa ke browser karena akses
+   datanya dijaga RLS. Secret key melewati seluruh RLS dan hanya boleh berada
+   di server — memasangnya pada variabel `NEXT_PUBLIC_` akan membocorkannya ke
+   setiap pengunjung.
 
 ### 3. Jalankan skema database
 
@@ -173,12 +182,15 @@ Isi `.env.local`:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxx
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Opsional — hanya untuk fitur "hapus akun peserta" di panel mentor
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxxxxxxxxx
 ```
+
+Nama alternatif juga diterima, supaya tidak tertukar dengan label di dashboard:
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` dan `SUPABASE_SECRET_KEY`.
 
 > Tiga variabel `NEXT_PUBLIC_*` aman dibagikan ke browser — akses data dijaga RLS di sisi database, bukan oleh kerahasiaan anon key.
 >
@@ -213,7 +225,7 @@ npm audit         # cek kerentanan dependency — harus "found 0 vulnerabilities
    | `NEXT_PUBLIC_SUPABASE_URL` | URL project Supabase |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key |
    | `NEXT_PUBLIC_SITE_URL` | `https://<project>.vercel.app` |
-   | `SUPABASE_SERVICE_ROLE_KEY` | service_role key — opsional, **jangan** beri awalan `NEXT_PUBLIC_` |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Secret key (`sb_secret_...`) — opsional, **jangan** beri awalan `NEXT_PUBLIC_` |
 
 3. Perbarui *Site URL* dan *Redirect URLs* di Supabase sesuai domain Vercel.
 4. **Deploy**.

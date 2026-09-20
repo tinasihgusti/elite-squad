@@ -25,7 +25,11 @@ function supabaseConfig() {
     url: env.NEXT_PUBLIC_SUPABASE_URL,
     projectRef: env.NEXT_PUBLIC_SUPABASE_URL.replace(/^https?:\/\//, "").split(".")[0],
     keyLength: key.length,
-    keyShape: isJwt ? "JWT (eyJ...)" : isPublishable ? "publishable (sb_publishable_...)" : "tidak dikenali",
+    keyShape: isJwt
+      ? "anon JWT (eyJ...)"
+      : isPublishable
+        ? "publishable (sb_publishable_...)"
+        : "TIDAK DIKENALI",
     keyLooksValid: (isJwt && key.length > 100) || (isPublishable && key.length > 30),
   };
 }
@@ -66,7 +70,7 @@ export default async function SetupCheckPage() {
             <dd className="break-all font-mono text-xs text-slate-900">{config.projectRef}</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-slate-500">Bentuk anon key</dt>
+            <dt className="text-slate-500">Bentuk publishable / anon key</dt>
             <dd className="font-mono text-xs text-slate-900">
               {config.keyShape} · {config.keyLength} karakter
             </dd>
