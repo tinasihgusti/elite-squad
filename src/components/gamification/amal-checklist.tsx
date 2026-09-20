@@ -18,7 +18,7 @@ export function AmalChecklist({
 }) {
   const [checked, setChecked] = useState<Set<string>>(new Set(checkedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; detail?: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const doneCount = items.filter((item) => checked.has(item.key)).length;
@@ -39,25 +39,48 @@ export function AmalChecklist({
     setPendingKey(item.key);
     setError(null);
 
-    startTransition(async () => {
-      const result = await toggleAmalAction(item.key, next);
-      setPendingKey(null);
+    const rollback = () =>
+      setChecked((prev) => {
+        const copy = new Set(prev);
+        if (next) copy.delete(item.key);
+        else copy.add(item.key);
+        return copy;
+      });
 
-      if (result.status === "error") {
-        setError(result.message);
-        setChecked((prev) => {
-          const copy = new Set(prev);
-          if (next) copy.delete(item.key);
-          else copy.add(item.key);
-          return copy;
+    startTransition(async () => {
+      try {
+        const result = await toggleAmalAction(item.key, next);
+        setPendingKey(null);
+
+        if (result.status === "error") {
+          setError({ message: result.message, detail: result.detail });
+          rollback();
+        }
+      } catch (e) {
+        // Tanpa penangkapan di sini, promise yang gagal menembus ke error
+        // boundary dan peserta hanya melihat "Ada yang bermasalah".
+        setPendingKey(null);
+        setError({
+          message: "Permintaan ke server gagal.",
+          detail: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
         });
+        rollback();
       }
     });
   }
 
   return (
     <div className="space-y-4">
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <Alert variant="error">
+          <p>{error.message}</p>
+          {error.detail && (
+            <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+              Detail teknis: {error.detail}
+            </p>
+          )}
+        </Alert>
+      )}
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-end justify-between gap-3">

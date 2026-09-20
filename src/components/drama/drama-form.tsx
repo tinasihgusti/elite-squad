@@ -28,7 +28,16 @@ export function DramaForm({ alreadyEarnedToday }: { alreadyEarnedToday: boolean 
       />
 
       <form ref={formRef} action={formAction} className="space-y-4" noValidate>
-        {state.status === "error" && state.message && <Alert variant="error">{state.message}</Alert>}
+        {state.status === "error" && state.message && (
+          <Alert variant="error">
+            <p>{state.message}</p>
+            {state.detail && (
+              <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+                Detail teknis: {state.detail}
+              </p>
+            )}
+          </Alert>
+        )}
         {state.status === "success" && <Alert variant="success">{state.message}</Alert>}
 
         {alreadyEarnedToday && state.status !== "success" && (

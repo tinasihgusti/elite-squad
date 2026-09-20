@@ -99,8 +99,15 @@ function DramaItem({ report }: { report: DramaWithAuthor }) {
           <input type="hidden" name="reportId" value={report.id} />
 
           {state.status === "error" && state.message && (
-            <Alert variant="error">{state.message}</Alert>
-          )}
+          <Alert variant="error">
+            <p>{state.message}</p>
+            {state.detail && (
+              <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+                Detail teknis: {state.detail}
+              </p>
+            )}
+          </Alert>
+        )}
           {state.status === "success" && <Alert variant="success">{state.message}</Alert>}
 
           <label htmlFor={`reply-${report.id}`} className="block text-xs font-medium text-slate-700">

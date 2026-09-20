@@ -19,16 +19,16 @@ export function ModuleList({
   );
   const [openSession, setOpenSession] = useState<number | null>(null);
   const [pending, setPending] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; detail?: string } | null>(null);
   const [, startTransition] = useTransition();
 
   function toggle(session: ModuleSessionRow) {
     const existing = done.get(session.session_number);
 
     if (existing?.verified_at) {
-      setError(
-        `Sesi ${session.session_number} sudah diverifikasi mentor. Hubungi mentor kalau perlu dikoreksi.`,
-      );
+      setError({
+        message: `Sesi ${session.session_number} sudah diverifikasi mentor. Hubungi mentor kalau perlu dikoreksi.`,
+      });
       return;
     }
 
@@ -37,11 +37,21 @@ export function ModuleList({
     setError(null);
 
     startTransition(async () => {
-      const result = await toggleModuleAction(session.session_number, next);
+      let result;
+      try {
+        result = await toggleModuleAction(session.session_number, next);
+      } catch (e) {
+        setPending(null);
+        setError({
+          message: "Permintaan ke server gagal.",
+          detail: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
+        });
+        return;
+      }
       setPending(null);
 
       if (result.status === "error") {
-        setError(result.message);
+        setError({ message: result.message, detail: result.detail });
         return;
       }
 
@@ -68,7 +78,16 @@ export function ModuleList({
 
   return (
     <div className="space-y-3">
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <Alert variant="error">
+          <p>{error.message}</p>
+          {error.detail && (
+            <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+              Detail teknis: {error.detail}
+            </p>
+          )}
+        </Alert>
+      )}
 
       {sessions.map((session) => {
         const completion = done.get(session.session_number);

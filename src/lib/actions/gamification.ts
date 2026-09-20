@@ -13,6 +13,47 @@ function refreshGamePages() {
 }
 
 /**
+ * Ubah apa pun yang dilempar menjadi ActionState yang bisa ditampilkan.
+ *
+ * Sebelumnya sebagian kode berada di luar try/catch, sehingga kegagalan di
+ * situ menembus ke error boundary dan peserta hanya melihat "Ada yang
+ * bermasalah" tanpa petunjuk apa pun. Server Action tidak boleh pernah
+ * melempar ke klien: penyebabnya harus sampai ke layar.
+ */
+function toActionState(scope: string, error: unknown): ActionState {
+  console.error(`[${scope}]`, error);
+
+  const detail =
+    error instanceof Error
+      ? `${error.name}: ${error.message}`
+      : typeof error === "object" && error !== null
+        ? JSON.stringify(error)
+        : String(error);
+
+  return {
+    status: "error",
+    message: "Gagal menyimpan. Rincian teknisnya ada di bawah.",
+    detail: detail.slice(0, 500),
+  };
+}
+
+/** Ubah error dari Supabase (bukan lemparan) menjadi ActionState. */
+function fromSupabaseError(
+  scope: string,
+  error: { message: string; code?: string; details?: string; hint?: string },
+): ActionState {
+  console.error(`[${scope}]`, error);
+  return {
+    status: "error",
+    message: "Gagal menyimpan ke database.",
+    detail: [error.code && `kode ${error.code}`, error.message, error.hint]
+      .filter(Boolean)
+      .join(" · ")
+      .slice(0, 500),
+  };
+}
+
+/**
  * Centang / batal-centang satu amalan yaumi untuk HARI INI.
  *
  * Tidak ada kolom "checked": tercentang berarti barisnya ada. Undo menghapus
@@ -33,8 +74,9 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
     if (!user) return { status: "error", message: "Sesi berakhir. Silakan login ulang." };
 
     const { data: today, error: dateError } = await supabase.rpc("today_wib");
-    if (dateError || !today) {
-      return { status: "error", message: "Gagal membaca tanggal server. Coba lagi." };
+    if (dateError) return fromSupabaseError("toggleAmalAction:today_wib", dateError);
+    if (!today) {
+      return { status: "error", message: "Server tidak mengembalikan tanggal. Coba lagi." };
     }
     const logDate = today as unknown as string;
 
@@ -45,8 +87,7 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
 
       // 23505 = sudah tercentang. Bukan kegagalan dari sudut pandang peserta.
       if (error && error.code !== "23505") {
-        console.error("[toggleAmalAction:insert]", error);
-        return { status: "error", message: "Gagal menyimpan centang. Coba lagi." };
+        return fromSupabaseError("toggleAmalAction:insert", error);
       }
     } else {
       const { error } = await supabase
@@ -56,17 +97,14 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
         .eq("habit_key", parsed.data)
         .eq("log_date", logDate);
 
-      if (error) {
-        console.error("[toggleAmalAction:delete]", error);
-        return { status: "error", message: "Gagal membatalkan centang. Coba lagi." };
-      }
+      if (error) return fromSupabaseError("toggleAmalAction:delete", error);
     }
+
+    refreshGamePages();
   } catch (error) {
-    console.error("[toggleAmalAction]", error);
-    return { status: "error", message: "Gagal terhubung ke server." };
+    return toActionState("toggleAmalAction", error);
   }
 
-  refreshGamePages();
   return { status: "success", message: checked ? "Amalan tercatat." : "Centang dibatalkan." };
 }
 
@@ -92,8 +130,7 @@ export async function toggleModuleAction(
         .insert({ user_id: user.id, session_number: parsed.data });
 
       if (error && error.code !== "23505") {
-        console.error("[toggleModuleAction:insert]", error);
-        return { status: "error", message: "Gagal menyimpan. Coba lagi." };
+        return fromSupabaseError("toggleModuleAction:insert", error);
       }
     } else {
       const { error } = await supabase
@@ -102,21 +139,14 @@ export async function toggleModuleAction(
         .eq("user_id", user.id)
         .eq("session_number", parsed.data);
 
-      if (error) {
-        console.error("[toggleModuleAction:delete]", error);
-        return {
-          status: "error",
-          message:
-            "Gagal membatalkan. Sesi yang sudah diverifikasi mentor hanya bisa dicabut oleh mentor.",
-        };
-      }
+      if (error) return fromSupabaseError("toggleModuleAction:delete", error);
     }
+
+    refreshGamePages();
   } catch (error) {
-    console.error("[toggleModuleAction]", error);
-    return { status: "error", message: "Gagal terhubung ke server." };
+    return toActionState("toggleModuleAction", error);
   }
 
-  refreshGamePages();
   return { status: "success", message: checked ? "Sesi tercatat." : "Centang sesi dibatalkan." };
 }
 

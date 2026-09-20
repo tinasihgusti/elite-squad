@@ -173,7 +173,16 @@ function AdjustXpForm({ participant }: { participant: AdminParticipantRow }) {
         </p>
       </div>
 
-      {state.status === "error" && state.message && <Alert variant="error">{state.message}</Alert>}
+      {state.status === "error" && state.message && (
+          <Alert variant="error">
+            <p>{state.message}</p>
+            {state.detail && (
+              <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+                Detail teknis: {state.detail}
+              </p>
+            )}
+          </Alert>
+        )}
       {state.status === "success" && <Alert variant="success">{state.message}</Alert>}
 
       <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
@@ -242,7 +251,16 @@ function DeleteParticipantForm({ participant }: { participant: AdminParticipantR
         </p>
       </div>
 
-      {state.status === "error" && state.message && <Alert variant="error">{state.message}</Alert>}
+      {state.status === "error" && state.message && (
+          <Alert variant="error">
+            <p>{state.message}</p>
+            {state.detail && (
+              <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+                Detail teknis: {state.detail}
+              </p>
+            )}
+          </Alert>
+        )}
 
       <Field
         label={`Ketik "${participant.full_name}" untuk konfirmasi`}
