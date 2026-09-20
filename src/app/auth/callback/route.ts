@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
  * Endpoint tujuan link verifikasi email / magic link Supabase.
  * Menukar `code` menjadi session cookie lalu mengarahkan ke dashboard.
  */
+
+// Route ini membaca query string dan menulis cookie session, jadi tidak boleh
+// di-prerender atau di-cache saat build. Dideklarasikan eksplisit supaya
+// perilakunya tidak berubah kalau default Next.js bergeser di versi berikutnya.
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
