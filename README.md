@@ -130,6 +130,10 @@ Buka **SQL Editor** di dashboard Supabase, lalu jalankan **berurutan**:
 
 1. [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) — profil, tracker mingguan, RLS dasar
 2. [`supabase/migrations/0002_gamification.sql`](supabase/migrations/0002_gamification.sql) — XP, level, amalan yaumi, kurikulum 10 sesi, Maba Drama, leaderboard, panel mentor
+3. [`supabase/migrations/0003_signup_hardening.sql`](supabase/migrations/0003_signup_hardening.sql) — pengaman pendaftaran dan pemeriksa instalasi
+
+Setelah selesai, buka **`/setup-check`** di aplikasi. Semua baris harus berstatus
+&ldquo;Siap&rdquo;. Halaman itu bisa dibuka tanpa login dan tidak menampilkan data apa pun.
 
 Kedua skrip idempoten (aman dijalankan ulang) dan sudah berisi seluruh data
 referensi: 5 level, 9 amalan yaumi, dan 10 sesi modul lengkap dengan indikator Juklak.
@@ -219,11 +223,32 @@ menyentuh project produksi — lihat [`supabase/tests/README.md`](supabase/tests
 
 ### Menjadikan akun sebagai mentor/admin
 
-Jalankan di SQL Editor:
+Daftar dulu lewat `/register`, lalu jalankan
+[`supabase/promote-admin.sql`](supabase/promote-admin.sql) di SQL Editor —
+ganti alamat emailnya sesuai akun yang mau diangkat. Skrip itu memeriksa
+hasilnya sendiri dan memberi tahu kalau gagal, lengkap dengan langkah cadangan.
 
-```sql
-update public.profiles set role = 'mentor' where id = '<uuid-user>';
-```
+---
+
+## Kalau Pendaftaran Gagal
+
+Pesan error di halaman daftar sekarang selalu menyertakan **detail teknis** dari
+Supabase, jadi penyebabnya langsung kelihatan. Tiga yang paling sering:
+
+| Pesan | Penyebab | Perbaikan |
+| --- | --- | --- |
+| &ldquo;Database Supabase belum siap&rdquo; | Migrasi SQL belum dijalankan sampai selesai | Jalankan 0001 → 0002 → 0003, cek di `/setup-check` |
+| &ldquo;Pendaftaran sedang dimatikan&rdquo; | Signup dimatikan di dashboard | Authentication → Sign In / Providers → Email → *Allow new users to sign up* |
+| &ldquo;URL redirect belum diizinkan&rdquo; | Domain Vercel belum didaftarkan | Authentication → URL Configuration → tambahkan `https://<domain>/auth/callback` |
+
+Pendaftaran tidak lagi bisa digagalkan oleh trigger pembuat profil: kalau
+pembuatan profil bermasalah, akun tetap jadi dan aplikasi membuat profilnya
+menyusul lewat `ensure_profile()` saat login pertama.
+
+> Catatan untuk 200 peserta: SMTP bawaan Supabase dibatasi beberapa email per jam
+> ([Supabase Auth Rate Limits](https://supabase.com/docs/guides/auth/rate-limits)).
+> Untuk onboarding serentak, pasang custom SMTP (Resend/SendGrid) atau matikan
+> konfirmasi email di Authentication → Sign In / Providers → Email.
 
 ---
 

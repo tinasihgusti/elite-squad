@@ -4,7 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 import type { Database } from "@/lib/database.types";
 
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/auth/callback", "/auth/auth-code-error"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/register",
+  "/setup-check",
+  "/auth/callback",
+  "/auth/auth-code-error",
+];
 
 function isPublic(pathname: string) {
   return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

@@ -30,7 +30,16 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
-      {state.status === "error" && state.message && <Alert variant="error">{state.message}</Alert>}
+      {state.status === "error" && state.message && (
+        <Alert variant="error">
+          <p>{state.message}</p>
+          {state.detail && (
+            <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+              Detail teknis: {state.detail}
+            </p>
+          )}
+        </Alert>
+      )}
 
       <Field label="Nama Lengkap" htmlFor="fullName" required errors={errors.fullName}>
         <input

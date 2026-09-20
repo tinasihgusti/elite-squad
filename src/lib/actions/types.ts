@@ -4,6 +4,11 @@ export type ActionState = {
   message: string;
   /** Error per field, dipakai untuk menampilkan pesan di bawah input terkait. */
   fieldErrors?: Record<string, string[]>;
+  /**
+   * Pesan teknis asli (misalnya dari Supabase). Ditampilkan kecil di bawah
+   * pesan utama supaya penyebab sebenarnya tidak pernah tertutup pesan generik.
+   */
+  detail?: string;
 };
 
 export const idleState: ActionState = { status: "idle", message: "" };

@@ -138,6 +138,13 @@ export type AdminParticipantRow = {
   joined_at: string;
 };
 
+/** Baris hasil fungsi `public.setup_status()`. */
+export type SetupStatusRow = {
+  item: string;
+  ready: boolean;
+  detail: string;
+};
+
 export type LeaderboardScope = "daily" | "weekly" | "monthly" | "all";
 
 /**
@@ -341,6 +348,14 @@ export type Database = {
       admin_participants: {
         Args: Record<string, never>;
         Returns: AdminParticipantRow[];
+      };
+      ensure_profile: {
+        Args: Record<string, never>;
+        Returns: ProfileRow;
+      };
+      setup_status: {
+        Args: Record<string, never>;
+        Returns: SetupStatusRow[];
       };
       today_wib: {
         Args: Record<string, never>;

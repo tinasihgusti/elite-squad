@@ -17,7 +17,18 @@ export const getProfile = cache(async (): Promise<ProfileRow | null> => {
     console.error("[getProfile]", error.message);
     return null;
   }
-  return data;
+  if (data) return data;
+
+  // User sudah login tapi barisnya belum ada di `profiles` — bisa terjadi
+  // kalau trigger pendaftaran gagal atau migrasi dijalankan setelah akun
+  // dibuat. Buat profilnya sekarang, jangan biarkan user terjebak.
+  const { data: healed, error: healError } = await supabase.rpc("ensure_profile");
+
+  if (healError) {
+    console.error("[getProfile:ensure_profile]", healError.message);
+    return null;
+  }
+  return (healed as unknown as ProfileRow | null) ?? null;
 });
 
 /** Seluruh tracker milik user, terbaru dulu. 200 user × ~16 minggu — aman tanpa paging. */

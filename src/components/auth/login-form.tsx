@@ -18,7 +18,16 @@ export function LoginForm({ next }: { next?: string }) {
     <form action={formAction} className="space-y-4" noValidate>
       {next && <input type="hidden" name="next" value={next} />}
 
-      {state.status === "error" && state.message && <Alert variant="error">{state.message}</Alert>}
+      {state.status === "error" && state.message && (
+        <Alert variant="error">
+          <p>{state.message}</p>
+          {state.detail && (
+            <p className="mt-2 break-words font-mono text-[11px] opacity-70">
+              Detail teknis: {state.detail}
+            </p>
+          )}
+        </Alert>
+      )}
 
       <Field label="Email" htmlFor="email" required errors={errors.email}>
         <input

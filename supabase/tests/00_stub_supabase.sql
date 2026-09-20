@@ -10,3 +10,4 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select uid from public._test_ctx limit 1;
 $$;
 create role authenticated;
+create role anon;
