@@ -4,7 +4,9 @@ Aplikasi web tracker mingguan untuk program mentoring **Elite Squad** — diranc
 
 Stack: **Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · Supabase (Auth + Postgres)**.
 
-Butuh **Node.js 20.9+** (Vercel membacanya dari `engines` di `package.json`).
+Butuh **Node.js 22.x** (Vercel membacanya dari `engines` di `package.json`).
+Versinya sengaja dipatok ke satu major, bukan rentang terbuka seperti
+`>=20.9.0`, supaya runtime tidak ikut naik sendiri saat Node major baru rilis.
 
 ---
 
@@ -244,6 +246,18 @@ npm audit         # cek kerentanan dependency — harus "found 0 vulnerabilities
 - Kolom `role` dikunci trigger — peserta tidak bisa mengangkat dirinya sendiri jadi admin lewat request `UPDATE` ke tabel `profiles`.
 - `SUPABASE_SERVICE_ROLE_KEY` hanya dipakai di `src/lib/supabase/admin.ts` yang ditandai `server-only`, sehingga build gagal kalau file itu sampai ter-import dari Client Component. Setiap action yang memakainya memverifikasi peran mentor/admin lebih dulu.
 - Leaderboard memakai fungsi `SECURITY DEFINER` yang hanya mengembalikan nama, squad, dan XP. Email, nomor WhatsApp, dan isi laporan Maba Drama tidak pernah terekspos ke peserta lain.
+
+### Peringatan build yang memang dibiarkan
+
+Dua peringatan muncul di log build Vercel dan keduanya tidak menghalangi apa pun:
+
+- `npm warn deprecated eslint@9.39.5` — 9.39.5 adalah rilis 9.x terakhir dan
+  berstatus *maintenance*. Naik ke ESLint 10 memecahkan `eslint-plugin-react`
+  bawaan `eslint-config-next`, jadi kita menunggu Next merilis konfigurasi yang
+  kompatibel. ESLint hanya devDependency dan tidak ikut ke runtime.
+- `npm warn allow-scripts ... unrs-resolver` — postinstall milik dependency
+  tidak langsung dari `eslint-config-next`. Dev-only, tidak memengaruhi build
+  maupun aplikasi yang berjalan.
 
 ### Dependency
 
