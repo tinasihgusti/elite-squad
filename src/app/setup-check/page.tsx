@@ -2,7 +2,33 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { createClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
 import type { SetupStatusRow } from "@/lib/database.types";
+
+/** Commit yang sedang ter-deploy. Vercel mengisinya otomatis saat build. */
+function deployedCommit(): string {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+  return sha ? sha.slice(0, 7) : "lokal / tidak diketahui";
+}
+
+/**
+ * Ringkasan konfigurasi Supabase yang dipakai aplikasi.
+ * Anon key sengaja TIDAK ditampilkan — hanya panjang dan bentuknya, cukup
+ * untuk memastikan key-nya terisi penuh dan tidak terpotong saat disalin.
+ */
+function supabaseConfig() {
+  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const isJwt = key.startsWith("eyJ");
+  const isPublishable = key.startsWith("sb_publishable_");
+
+  return {
+    url: env.NEXT_PUBLIC_SUPABASE_URL,
+    projectRef: env.NEXT_PUBLIC_SUPABASE_URL.replace(/^https?:\/\//, "").split(".")[0],
+    keyLength: key.length,
+    keyShape: isJwt ? "JWT (eyJ...)" : isPublishable ? "publishable (sb_publishable_...)" : "tidak dikenali",
+    keyLooksValid: (isJwt && key.length > 100) || (isPublishable && key.length > 30),
+  };
+}
 
 export const metadata: Metadata = { title: "Cek Instalasi" };
 export const dynamic = "force-dynamic";
@@ -18,6 +44,8 @@ export default async function SetupCheckPage() {
 
   const rows = (data as unknown as SetupStatusRow[] | null) ?? [];
   const allReady = rows.length > 0 && rows.every((row) => row.ready);
+  const config = supabaseConfig();
+  const isApiKeyError = /invalid api key|jwt|apikey/i.test(error?.message ?? "");
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-12">
@@ -26,13 +54,55 @@ export default async function SetupCheckPage() {
         Memastikan skema database Supabase sudah terpasang lengkap.
       </p>
 
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-bold text-slate-900">Konfigurasi yang dipakai aplikasi</h2>
+        <dl className="mt-3 space-y-2 text-sm">
+          <div className="flex flex-wrap justify-between gap-2">
+            <dt className="text-slate-500">Commit ter-deploy</dt>
+            <dd className="font-mono text-xs text-slate-900">{deployedCommit()}</dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2">
+            <dt className="text-slate-500">Project Supabase</dt>
+            <dd className="break-all font-mono text-xs text-slate-900">{config.projectRef}</dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2">
+            <dt className="text-slate-500">Bentuk anon key</dt>
+            <dd className="font-mono text-xs text-slate-900">
+              {config.keyShape} · {config.keyLength} karakter
+            </dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs text-slate-500">
+          Cocokkan <strong>Project Supabase</strong> di atas dengan project yang kamu buka di
+          dashboard. Kalau berbeda, berarti anon key dan URL berasal dari project yang tidak sama.
+        </p>
+      </section>
+
       {error ? (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5">
-          <h2 className="text-sm font-bold text-red-900">Belum bisa membaca status</h2>
-          <p className="mt-2 text-sm text-red-800">
-            Aplikasi tidak menemukan fungsi <code>setup_status()</code>. Artinya migrasi SQL belum
-            dijalankan sama sekali, atau baru sebagian.
-          </p>
+          {isApiKeyError ? (
+            <>
+              <h2 className="text-sm font-bold text-red-900">Anon key ditolak Supabase</h2>
+              <p className="mt-2 text-sm text-red-800">
+                Aplikasi berhasil menghubungi Supabase, tapi kuncinya ditolak. Ambil ulang di
+                Supabase → <strong>Project Settings → API Keys</strong>, salin nilai{" "}
+                <strong>anon / publishable</strong> secara utuh, lalu perbarui{" "}
+                <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> di Vercel.
+              </p>
+              <p className="mt-2 text-sm font-semibold text-red-900">
+                Setelah mengubahnya, WAJIB Redeploy. Variabel berawalan NEXT_PUBLIC_ ditanam saat
+                build, jadi nilainya tidak berubah sampai ada build baru.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-sm font-bold text-red-900">Belum bisa membaca status</h2>
+              <p className="mt-2 text-sm text-red-800">
+                Aplikasi tidak menemukan fungsi <code>setup_status()</code>. Artinya migrasi SQL
+                belum dijalankan sama sekali, atau baru sebagian.
+              </p>
+            </>
+          )}
           <p className="mt-3 break-words font-mono text-[11px] text-red-700 opacity-80">
             {error.message}
           </p>
