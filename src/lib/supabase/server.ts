@@ -8,8 +8,8 @@ import type { Database } from "@/lib/database.types";
  * Supabase client untuk Server Component, Route Handler, dan Server Action.
  * Session dibaca/ditulis lewat cookie httpOnly — aman, tidak bocor ke JS client.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,

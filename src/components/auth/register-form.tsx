@@ -1,7 +1,7 @@
 "use client";
 
+import { useActionState } from "react";
 import Link from "next/link";
-import { useFormState } from "react-dom";
 
 import { registerAction } from "@/lib/actions/auth";
 import { idleState } from "@/lib/actions/types";
@@ -11,7 +11,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 export function RegisterForm() {
-  const [state, formAction] = useFormState(registerAction, idleState);
+  const [state, formAction] = useActionState(registerAction, idleState);
   const errors = state.fieldErrors ?? {};
 
   if (state.status === "success") {

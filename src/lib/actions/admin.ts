@@ -15,7 +15,7 @@ import { idleState, zodToActionState, type ActionState } from "./types";
 async function requireStaff(): Promise<
   { ok: true; staff: ProfileRow } | { ok: false; state: ActionState }
 > {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -81,7 +81,7 @@ export async function adjustXpAction(
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.from("xp_events").insert({
       user_id: userId,
       source: "admin_adjustment",
@@ -116,7 +116,7 @@ export async function revertAdjustmentAction(eventId: string): Promise<ActionSta
   const parsed = z.string().uuid().safeParse(eventId);
   if (!parsed.success) return { status: "error", message: "Penyesuaian tidak ditemukan." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("xp_events")
     .delete()
@@ -146,7 +146,7 @@ export async function verifyModuleAction(
   const parsed = z.string().uuid().safeParse(completionId);
   if (!parsed.success) return { status: "error", message: "Data sesi tidak ditemukan." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("module_completions")
     .update({
@@ -172,7 +172,7 @@ export async function revokeModuleAction(completionId: string): Promise<ActionSt
   const parsed = z.string().uuid().safeParse(completionId);
   if (!parsed.success) return { status: "error", message: "Data sesi tidak ditemukan." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("module_completions").delete().eq("id", parsed.data);
 
   if (error) {
@@ -207,7 +207,7 @@ export async function replyDramaAction(
   const parsed = replySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodToActionState(parsed.error.flatten().fieldErrors);
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("drama_reports")
     .update({
@@ -270,7 +270,7 @@ export async function deleteParticipantAction(
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: target } = await supabase
       .from("profiles")
       .select("full_name, role")

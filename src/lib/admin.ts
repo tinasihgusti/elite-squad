@@ -19,7 +19,7 @@ export const getStaffProfile = cache(async (): Promise<ProfileRow | null> => {
 });
 
 export const getParticipants = cache(async (): Promise<AdminParticipantRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("admin_participants", {});
 
   if (error) {
@@ -34,7 +34,7 @@ export type DramaWithAuthor = DramaReportRow & {
 };
 
 export const getAllDramaReports = cache(async (limit = 100): Promise<DramaWithAuthor[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("drama_reports")
     .select("*, profiles!drama_reports_user_id_fkey (full_name, squad)")
@@ -50,7 +50,7 @@ export const getAllDramaReports = cache(async (limit = 100): Promise<DramaWithAu
 });
 
 export const getRecentAdjustments = cache(async (limit = 20): Promise<XpEventRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("xp_events")
     .select("*")
@@ -66,7 +66,7 @@ export const getRecentAdjustments = cache(async (limit = 20): Promise<XpEventRow
 });
 
 export const getPendingVerifications = cache(async (): Promise<ModuleCompletionRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("module_completions")
     .select("*")

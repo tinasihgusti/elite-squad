@@ -15,7 +15,7 @@ import type {
 
 /** Tanggal "hari ini" menurut server (WIB) — acuan reset amalan harian. */
 export const getToday = cache(async (): Promise<string> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("today_wib");
 
   if (error || !data) {
@@ -27,7 +27,7 @@ export const getToday = cache(async (): Promise<string> => {
 });
 
 export const getAmalItems = cache(async (): Promise<AmalItemRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("amal_items")
     .select("*")
@@ -43,7 +43,7 @@ export const getAmalItems = cache(async (): Promise<AmalItemRow[]> => {
 
 /** Kunci amalan yang sudah dicentang hari ini. Hari baru otomatis kosong. */
 export const getTodayAmalKeys = cache(async (): Promise<string[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -64,7 +64,7 @@ export const getTodayAmalKeys = cache(async (): Promise<string[]> => {
 });
 
 export const getModuleSessions = cache(async (): Promise<ModuleSessionRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("module_sessions")
     .select("*")
@@ -78,7 +78,7 @@ export const getModuleSessions = cache(async (): Promise<ModuleSessionRow[]> => 
 });
 
 export const getMyModuleCompletions = cache(async (): Promise<ModuleCompletionRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -97,7 +97,7 @@ export const getMyModuleCompletions = cache(async (): Promise<ModuleCompletionRo
 });
 
 export const getLevels = cache(async (): Promise<LevelRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.from("levels").select("*").order("level");
 
   if (error) {
@@ -108,7 +108,7 @@ export const getLevels = cache(async (): Promise<LevelRow[]> => {
 });
 
 export const getMissionProgress = cache(async (): Promise<MissionProgressRow | null> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("mission_progress", {});
 
   if (error) {
@@ -123,7 +123,7 @@ export async function getLeaderboard(
   scope: LeaderboardScope = "all",
   limit = 50,
 ): Promise<LeaderboardRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("leaderboard", { p_scope: scope, p_limit: limit });
 
   if (error) {
@@ -134,7 +134,7 @@ export async function getLeaderboard(
 }
 
 export const getMyDramaReports = cache(async (): Promise<DramaReportRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -154,7 +154,7 @@ export const getMyDramaReports = cache(async (): Promise<DramaReportRow[]> => {
 });
 
 export const getMyXpHistory = cache(async (limit = 30): Promise<XpEventRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

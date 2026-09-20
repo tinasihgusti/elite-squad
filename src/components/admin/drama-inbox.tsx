@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState } from "react-dom";
+import { useState, useActionState } from "react";
 
 import { replyDramaAction } from "@/lib/actions/admin";
 import { idleState } from "@/lib/actions/types";
@@ -59,7 +58,7 @@ export function DramaInbox({ reports }: { reports: DramaWithAuthor[] }) {
 }
 
 function DramaItem({ report }: { report: DramaWithAuthor }) {
-  const [state, formAction] = useFormState(replyDramaAction, idleState);
+  const [state, formAction] = useActionState(replyDramaAction, idleState);
   const errors = state.fieldErrors ?? {};
 
   return (

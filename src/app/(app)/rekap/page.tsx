@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { averageScore, getMyTrackers, habitCount } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 

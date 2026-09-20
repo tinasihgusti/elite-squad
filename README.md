@@ -2,7 +2,9 @@
 
 Aplikasi web tracker mingguan untuk program mentoring **Elite Squad** — dirancang untuk ±200 pengguna aktif.
 
-Stack: **Next.js 14 (App Router) · TypeScript · Tailwind CSS · Supabase (Auth + Postgres)**.
+Stack: **Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · Supabase (Auth + Postgres)**.
+
+Butuh **Node.js 20.9+** (Vercel membacanya dari `engines` di `package.json`).
 
 ---
 
@@ -165,8 +167,9 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
 ```bash
 npm run dev       # http://localhost:3000
 npm run typecheck # cek tipe
-npm run lint      # cek lint
+npm run lint      # cek lint (ESLint 9 flat config)
 npm run build     # build produksi
+npm audit         # cek kerentanan dependency — harus "found 0 vulnerabilities"
 ```
 
 ---
@@ -200,6 +203,14 @@ npm run build     # build produksi
 - Kolom `role` dikunci trigger — peserta tidak bisa mengangkat dirinya sendiri jadi admin lewat request `UPDATE` ke tabel `profiles`.
 - `SUPABASE_SERVICE_ROLE_KEY` hanya dipakai di `src/lib/supabase/admin.ts` yang ditandai `server-only`, sehingga build gagal kalau file itu sampai ter-import dari Client Component. Setiap action yang memakainya memverifikasi peran mentor/admin lebih dulu.
 - Leaderboard memakai fungsi `SECURITY DEFINER` yang hanya mengembalikan nama, squad, dan XP. Email, nomor WhatsApp, dan isi laporan Maba Drama tidak pernah terekspos ke peserta lain.
+
+### Dependency
+
+Proyek ini sengaja memakai Next.js 16. Versi 14.x dan 15.x masih membawa
+kerentanan `critical` yang relevan langsung dengan aplikasi ini — di antaranya
+[Authorization Bypass in Next.js Middleware](https://github.com/advisories/GHSA-f82v-jwr5-mffw),
+yang bisa melewati proteksi route di `src/middleware.ts`. Jalankan `npm audit`
+setelah setiap `npm install`; targetnya tetap nol temuan.
 
 ### Uji otomatis skema
 

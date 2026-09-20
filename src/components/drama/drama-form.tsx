@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
 
 import { DRAMA_CATEGORIES, submitDramaAction } from "@/lib/actions/gamification";
 import { idleState } from "@/lib/actions/types";
@@ -12,7 +11,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 export function DramaForm({ alreadyEarnedToday }: { alreadyEarnedToday: boolean }) {
-  const [state, formAction] = useFormState(submitDramaAction, idleState);
+  const [state, formAction] = useActionState(submitDramaAction, idleState);
   const errors = state.fieldErrors ?? {};
   const formRef = useRef<HTMLFormElement>(null);
 

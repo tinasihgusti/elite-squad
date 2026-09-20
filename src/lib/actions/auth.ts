@@ -32,7 +32,7 @@ export async function registerAction(
   const { email, password, fullName, squad, faculty, phone } = parsed.data;
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -77,7 +77,7 @@ export async function loginAction(
   const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     if (error) return { status: "error", message: translateAuthError(error.message) };
   } catch (error) {
@@ -90,7 +90,7 @@ export async function loginAction(
 }
 
 export async function logoutAction(): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login");

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useActionState } from "react";
 
 import { submitTrackerAction } from "@/lib/actions/tracker";
 import { idleState } from "@/lib/actions/types";
@@ -69,7 +68,7 @@ export function TrackerForm({
   existing: WeeklyTrackerRow | null;
   defaultWeek?: number;
 }) {
-  const [state, formAction] = useFormState(submitTrackerAction, idleState);
+  const [state, formAction] = useActionState(submitTrackerAction, idleState);
   const errors = state.fieldErrors ?? {};
   const feedbackRef = useRef<HTMLDivElement>(null);
 

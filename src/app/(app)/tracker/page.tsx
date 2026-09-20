@@ -11,12 +11,14 @@ export const metadata: Metadata = { title: "Isi Tracker" };
 export default async function TrackerPage({
   searchParams,
 }: {
-  searchParams: { week?: string };
+  searchParams: Promise<{ week?: string }>;
 }) {
+  const { week: weekParam } = await searchParams;
+
   const profile = await getProfile();
   if (!profile) redirect("/login");
 
-  const parsedWeek = Number(searchParams.week);
+  const parsedWeek = Number(weekParam);
   const week =
     Number.isInteger(parsedWeek) && parsedWeek >= 1 && parsedWeek <= 52
       ? parsedWeek

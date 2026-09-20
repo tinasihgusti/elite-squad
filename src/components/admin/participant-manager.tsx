@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useFormState } from "react-dom";
+import { useMemo, useState, useActionState } from "react";
 
 import { adjustXpAction, deleteParticipantAction } from "@/lib/actions/admin";
 import { idleState } from "@/lib/actions/types";
@@ -160,7 +159,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 function AdjustXpForm({ participant }: { participant: AdminParticipantRow }) {
-  const [state, formAction] = useFormState(adjustXpAction, idleState);
+  const [state, formAction] = useActionState(adjustXpAction, idleState);
   const errors = state.fieldErrors ?? {};
 
   return (
@@ -211,7 +210,7 @@ function AdjustXpForm({ participant }: { participant: AdminParticipantRow }) {
 }
 
 function DeleteParticipantForm({ participant }: { participant: AdminParticipantRow }) {
-  const [state, formAction] = useFormState(deleteParticipantAction, idleState);
+  const [state, formAction] = useActionState(deleteParticipantAction, idleState);
   const [expanded, setExpanded] = useState(false);
   const errors = state.fieldErrors ?? {};
 

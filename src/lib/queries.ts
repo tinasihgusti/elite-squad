@@ -5,7 +5,7 @@ import type { ProfileRow, WeeklyTrackerRow } from "@/lib/database.types";
 
 /** Profil user yang sedang login. `cache` mencegah query ganda dalam satu render. */
 export const getProfile = cache(async (): Promise<ProfileRow | null> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -22,7 +22,7 @@ export const getProfile = cache(async (): Promise<ProfileRow | null> => {
 
 /** Seluruh tracker milik user, terbaru dulu. 200 user × ~16 minggu — aman tanpa paging. */
 export const getMyTrackers = cache(async (): Promise<WeeklyTrackerRow[]> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,7 +43,7 @@ export const getMyTrackers = cache(async (): Promise<WeeklyTrackerRow[]> => {
 
 export const getTrackerByWeek = cache(
   async (weekNumber: number): Promise<WeeklyTrackerRow | null> => {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

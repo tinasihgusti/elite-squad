@@ -26,9 +26,11 @@ function isScope(value: string | undefined): value is LeaderboardScope {
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: { scope?: string };
+  searchParams: Promise<{ scope?: string }>;
 }) {
-  const scope: LeaderboardScope = isScope(searchParams.scope) ? searchParams.scope : "daily";
+  const { scope: scopeParam } = await searchParams;
+
+  const scope: LeaderboardScope = isScope(scopeParam) ? scopeParam : "daily";
   const active = SCOPES.find((s) => s.key === scope)!;
 
   const [rows, profile] = await Promise.all([getLeaderboard(scope, 100), getProfile()]);

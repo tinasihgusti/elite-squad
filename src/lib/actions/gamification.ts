@@ -25,7 +25,7 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
   if (!parsed.success) return { status: "error", message: "Amalan tidak dikenali." };
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -79,7 +79,7 @@ export async function toggleModuleAction(
   if (!parsed.success) return { status: "error", message: "Nomor sesi tidak valid." };
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -158,7 +158,7 @@ export async function submitDramaAction(
   if (!parsed.success) return zodToActionState(parsed.error.flatten().fieldErrors);
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -198,7 +198,7 @@ export async function deleteDramaAction(reportId: string): Promise<ActionState> 
   if (!parsed.success) return { status: "error", message: "Laporan tidak ditemukan." };
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

@@ -5,11 +5,13 @@ import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Masuk" };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: Promise<{ next?: string }>;
 }) {
+  const { next } = await searchParams;
+
   return (
     <Card>
       <div className="mb-6">
@@ -18,7 +20,7 @@ export default function LoginPage({
           Lanjutkan mengisi tracker mingguan Elite Squad.
         </p>
       </div>
-      <LoginForm next={searchParams.next} />
+      <LoginForm next={next} />
     </Card>
   );
 }

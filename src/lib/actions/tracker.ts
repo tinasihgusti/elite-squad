@@ -16,7 +16,7 @@ export async function submitTrackerAction(
   const d = parsed.data;
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,

@@ -1,7 +1,7 @@
 "use client";
 
+import { useActionState } from "react";
 import Link from "next/link";
-import { useFormState } from "react-dom";
 
 import { loginAction } from "@/lib/actions/auth";
 import { idleState } from "@/lib/actions/types";
@@ -11,7 +11,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 export function LoginForm({ next }: { next?: string }) {
-  const [state, formAction] = useFormState(loginAction, idleState);
+  const [state, formAction] = useActionState(loginAction, idleState);
   const errors = state.fieldErrors ?? {};
 
   return (
