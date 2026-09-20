@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /* Target sentuh nyaman di mobile */
+  button,
+  [role="button"],
+  input[type="submit"] {
+    touch-action: manipulation;
+  }
+}

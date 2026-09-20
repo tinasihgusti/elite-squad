@@ -1,0 +1,46 @@
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+import { TrackerForm } from "@/components/tracker/tracker-form";
+import { Alert } from "@/components/ui/alert";
+import { getProfile, getTrackerByWeek } from "@/lib/queries";
+import { isoWeekNumber } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Isi Tracker" };
+
+export default async function TrackerPage({
+  searchParams,
+}: {
+  searchParams: { week?: string };
+}) {
+  const profile = await getProfile();
+  if (!profile) redirect("/login");
+
+  const parsedWeek = Number(searchParams.week);
+  const week =
+    Number.isInteger(parsedWeek) && parsedWeek >= 1 && parsedWeek <= 52
+      ? parsedWeek
+      : isoWeekNumber();
+
+  const existing = await getTrackerByWeek(week);
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Tracker Mingguan</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Minggu ke-{week}. Isi jujur — datanya untuk refleksimu sendiri dan bahan mentor.
+        </p>
+      </div>
+
+      {existing && (
+        <Alert variant="info">
+          Kamu sudah mengisi tracker minggu ini. Form di bawah berisi jawaban terakhirmu —
+          menyimpan lagi akan memperbaruinya, bukan membuat entri baru.
+        </Alert>
+      )}
+
+      <TrackerForm profile={profile} existing={existing} defaultWeek={week} />
+    </div>
+  );
+}
