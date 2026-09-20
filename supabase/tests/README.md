@@ -37,3 +37,9 @@ penyesuaian XP negatif oleh mentor, leaderboard, dan `mission_progress`.
 `03` — peserta tidak bisa menyuntik XP, mengisi amalan mundur, menulis atas nama
 orang lain, mengangkat dirinya jadi admin, membaca laporan peserta lain, atau
 memalsukan balasan mentor.
+
+`04` — memverifikasi bahwa policy `profiles` yang terlalu terbuka benar-benar
+membocorkan data (anonim bisa membaca seluruh nama dan nomor WhatsApp, dan
+peserta tanpa profil bisa mengangkat dirinya jadi admin lalu membaca laporan
+Maba Drama orang lain), lalu membuktikan migrasi 0004 menutup keduanya tanpa
+merusak pendaftaran normal maupun pengangkatan mentor.

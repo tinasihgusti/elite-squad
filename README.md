@@ -131,6 +131,14 @@ Buka **SQL Editor** di dashboard Supabase, lalu jalankan **berurutan**:
 1. [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) — profil, tracker mingguan, RLS dasar
 2. [`supabase/migrations/0002_gamification.sql`](supabase/migrations/0002_gamification.sql) — XP, level, amalan yaumi, kurikulum 10 sesi, Maba Drama, leaderboard, panel mentor
 3. [`supabase/migrations/0003_signup_hardening.sql`](supabase/migrations/0003_signup_hardening.sql) — pengaman pendaftaran dan pemeriksa instalasi
+4. [`supabase/migrations/0004_repair_open_policies.sql`](supabase/migrations/0004_repair_open_policies.sql) — menutup policy `profiles` yang terlalu terbuka
+
+> **Jangan menjalankan policy RLS dari sumber lain di tabel `profiles`.** Policy
+> RLS bersifat *permissive* dan di-OR: satu policy `using (true)` saja sudah
+> membatalkan seluruh pembatasan yang ada, sehingga nama dan nomor WhatsApp
+> semua peserta bisa dibaca siapa pun yang punya anon key — dan anon key itu
+> memang publik, tertanam di bundle JavaScript. Migrasi 0004 menutupnya kembali
+> dan aman dijalankan kapan saja.
 
 Setelah selesai, buka **`/setup-check`** di aplikasi. Semua baris harus berstatus
 &ldquo;Siap&rdquo;. Halaman itu bisa dibuka tanpa login dan tidak menampilkan data apa pun.
