@@ -13,6 +13,19 @@ export type ActionState = {
 
 export const idleState: ActionState = { status: "idle", message: "" };
 
+/**
+ * Hasil aksi ceklis. Selain status, aksi mengembalikan keadaan terbaru menurut
+ * server — daftar yang tercentang dan XP hari ini.
+ *
+ * Dengan begitu tampilan tidak perlu menunggu render ulang halaman: klien
+ * menyalin kebenaran dari server, sehingga centang optimistik yang meleset
+ * otomatis terkoreksi dan tidak ada lagi jalur yang bisa gagal diam-diam.
+ */
+export type ToggleState = ActionState & {
+  keys?: string[];
+  todayXp?: number;
+};
+
 /** Ubah error Zod menjadi ActionState. */
 export function zodToActionState(
   fieldErrors: Record<string, string[] | undefined>,

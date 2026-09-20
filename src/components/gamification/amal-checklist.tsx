@@ -17,13 +17,17 @@ export function AmalChecklist({
   today: string;
 }) {
   const [checked, setChecked] = useState<Set<string>>(new Set(checkedKeys));
+  const [serverXp, setServerXp] = useState<number | null>(null);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; detail?: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const doneCount = items.filter((item) => checked.has(item.key)).length;
   const allDone = doneCount === items.length && items.length > 0;
-  const earned = items.reduce((sum, i) => (checked.has(i.key) ? sum + i.xp_reward : sum), 0);
+  const localEarned = items.reduce((sum, i) => (checked.has(i.key) ? sum + i.xp_reward : sum), 0);
+  // XP dari server sudah termasuk bonus harian; hitungan lokal hanya cadangan
+  // sebelum klik pertama.
+  const earned = serverXp ?? localEarned;
 
   function toggle(item: AmalItemRow) {
     const next = !checked.has(item.key);
@@ -55,7 +59,13 @@ export function AmalChecklist({
         if (result.status === "error") {
           setError({ message: result.message, detail: result.detail });
           rollback();
+          return;
         }
+
+        // Selaraskan dengan keadaan sebenarnya di server. Kalau centang
+        // optimistik tadi meleset, di sinilah ia terkoreksi sendiri.
+        if (result.keys) setChecked(new Set(result.keys));
+        if (typeof result.todayXp === "number") setServerXp(result.todayXp);
       } catch (e) {
         // Tanpa penangkapan di sini, promise yang gagal menembus ke error
         // boundary dan peserta hanya melihat "Ada yang bermasalah".

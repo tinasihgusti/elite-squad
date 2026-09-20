@@ -4,27 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
-import { idleState, zodToActionState, type ActionState } from "./types";
-
-const GAME_PATHS = ["/dashboard", "/amalan", "/misi", "/drama", "/leaderboard"];
-
-/**
- * Menyegarkan halaman-halaman yang menampilkan XP.
- *
- * Hanya dipakai untuk aksi berbasis form (kirim laporan, simpan tracker), yang
- * hasilnya memang harus langsung terlihat pada daftar yang dirender server.
- *
- * TIDAK dipakai pada ceklis amalan dan modul. Ceklis sudah memperbarui
- * tampilannya sendiri secara optimistik, sementara seluruh halaman ini
- * `force-dynamic` alias tidak pernah di-cache — jadi revalidasi tidak
- * menambah kesegaran apa pun. Yang ia lakukan justru menyeret render ulang
- * seluruh halaman ke dalam respons setiap klik: sembilan kali lipat beban
- * server per peserta per hari, dan satu kegagalan render di sana membuat
- * klik yang sebenarnya berhasil tampak gagal.
- */
-function refreshGamePages() {
-  GAME_PATHS.forEach((path) => revalidatePath(path));
-}
+import { idleState, zodToActionState, type ActionState, type ToggleState } from "./types";
 
 /**
  * Ubah apa pun yang dilempar menjadi ActionState yang bisa ditampilkan.
@@ -75,7 +55,10 @@ function fromSupabaseError(
  * ceklisnya jadi tidak lengkap lagi. Tanggalnya diisi default `today_wib()` di
  * database, jadi peserta tidak bisa mengisi mundur ke hari kemarin.
  */
-export async function toggleAmalAction(habitKey: string, checked: boolean): Promise<ActionState> {
+export async function toggleAmalAction(
+  habitKey: string,
+  checked: boolean,
+): Promise<ToggleState> {
   const parsed = z.string().min(1).max(60).safeParse(habitKey);
   if (!parsed.success) return { status: "error", message: "Amalan tidak dikenali." };
 
@@ -113,18 +96,34 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
 
       if (error) return fromSupabaseError("toggleAmalAction:delete", error);
     }
+
+    // Baca ulang keadaan sebenarnya, lalu kirim ke klien. Tampilan ikut
+    // kebenaran server tanpa perlu render ulang halaman.
+    const [{ data: rows }, { data: xpRows }] = await Promise.all([
+      supabase
+        .from("daily_amal_logs")
+        .select("habit_key")
+        .eq("user_id", user.id)
+        .eq("log_date", logDate),
+      supabase.from("xp_events").select("points").eq("user_id", user.id).eq("occurred_on", logDate),
+    ]);
+
+    return {
+      status: "success",
+      message: checked ? "Amalan tercatat." : "Centang dibatalkan.",
+      keys: (rows ?? []).map((r) => r.habit_key),
+      todayXp: (xpRows ?? []).reduce((sum, r) => sum + r.points, 0),
+    };
   } catch (error) {
     return toActionState("toggleAmalAction", error);
   }
-
-  return { status: "success", message: checked ? "Amalan tercatat." : "Centang dibatalkan." };
 }
 
 /** Centang / batalkan kehadiran satu sesi modul. Mentor bisa mencabutnya dari panel. */
 export async function toggleModuleAction(
   sessionNumber: number,
   checked: boolean,
-): Promise<ActionState> {
+): Promise<ToggleState> {
   const parsed = z.number().int().min(1).max(10).safeParse(sessionNumber);
   if (!parsed.success) return { status: "error", message: "Nomor sesi tidak valid." };
 
@@ -153,11 +152,20 @@ export async function toggleModuleAction(
 
       if (error) return fromSupabaseError("toggleModuleAction:delete", error);
     }
+
+    const { data: rows } = await supabase
+      .from("module_completions")
+      .select("session_number")
+      .eq("user_id", user.id);
+
+    return {
+      status: "success",
+      message: checked ? "Sesi tercatat." : "Centang sesi dibatalkan.",
+      keys: (rows ?? []).map((r) => String(r.session_number)),
+    };
   } catch (error) {
     return toActionState("toggleModuleAction", error);
   }
-
-  return { status: "success", message: checked ? "Sesi tercatat." : "Centang sesi dibatalkan." };
 }
 
 export const DRAMA_CATEGORIES = [
@@ -225,7 +233,8 @@ export async function submitDramaAction(
     return { status: "error", message: "Gagal terhubung ke server." };
   }
 
-  refreshGamePages();
+  // Cukup halaman ini: daftarnya dirender server, sisanya force-dynamic.
+  revalidatePath("/drama");
   return {
     status: "success",
     message:
@@ -262,6 +271,6 @@ export async function deleteDramaAction(reportId: string): Promise<ActionState> 
     return { status: "error", message: "Gagal terhubung ke server." };
   }
 
-  refreshGamePages();
+  revalidatePath("/drama");
   return { status: "success", message: "Laporan dihapus." };
 }

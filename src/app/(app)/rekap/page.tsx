@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Card } from "@/components/ui/card";
+import { RenderError } from "@/components/ui/render-error";
 import { averageScore, getMyTrackers, habitCount } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
@@ -15,7 +16,12 @@ const ATTENDANCE_LABEL: Record<string, string> = {
 };
 
 export default async function RekapPage() {
-  const trackers = await getMyTrackers();
+  let trackers;
+  try {
+    trackers = await getMyTrackers();
+  } catch (error) {
+    return <RenderError where="rekap tracker" error={error} />;
+  }
 
   return (
     <div className="space-y-5">

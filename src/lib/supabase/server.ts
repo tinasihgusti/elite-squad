@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 import { env } from "@/lib/env";
@@ -24,9 +25,16 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             );
-          } catch {
-            // Dipanggil dari Server Component: set cookie diabaikan.
-            // Refresh session tetap ditangani middleware, jadi ini aman.
+          } catch (error) {
+            // Menulis cookie dari Server Component memang ditolak Next.js, dan
+            // itu aman diabaikan: refresh session tetap ditangani middleware.
+            //
+            // Tapi `catch` polos juga akan menelan sinyal internal Next
+            // (redirect, notFound, bailout render dinamis). Sinyal itu
+            // dipakai Next untuk mengatur alur, dan menelannya membuat
+            // perilaku aplikasi tidak menentu. `unstable_rethrow` melempar
+            // ulang khusus sinyal tersebut dan membiarkan sisanya lewat.
+            unstable_rethrow(error);
           }
         },
       },

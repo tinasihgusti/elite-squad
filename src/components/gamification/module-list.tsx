@@ -55,9 +55,29 @@ export function ModuleList({
         return;
       }
 
+      // Ikuti daftar yang dikembalikan server, bukan tebakan lokal.
+      const fromServer = result.keys?.map(Number);
       setDone((prev) => {
         const copy = new Map(prev);
-        if (next) {
+        if (fromServer) {
+          for (const num of Array.from(copy.keys())) {
+            if (!fromServer.includes(num)) copy.delete(num);
+          }
+          for (const num of fromServer) {
+            if (!copy.has(num)) {
+              copy.set(num, {
+                id: `server-${num}`,
+                user_id: "",
+                session_number: num,
+                reflection: null,
+                completed_on: new Date().toISOString().slice(0, 10),
+                verified_by: null,
+                verified_at: null,
+                created_at: new Date().toISOString(),
+              });
+            }
+          }
+        } else if (next) {
           copy.set(session.session_number, {
             id: `optimistic-${session.session_number}`,
             user_id: "",

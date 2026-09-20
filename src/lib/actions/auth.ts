@@ -168,8 +168,18 @@ export async function loginAction(
 }
 
 export async function logoutAction(): Promise<void> {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  revalidatePath("/", "layout");
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+  } catch (error) {
+    // Gagal menghubungi Supabase tidak boleh menjebak peserta di dalam
+    // aplikasi. Cookie sesi akan kedaluwarsa sendiri, jadi tetap antarkan
+    // ke halaman login.
+    console.error("[logoutAction]", error);
+  }
+
+  // Di luar try: redirect() memang bekerja dengan melempar sinyal internal
+  // Next, dan sinyal itu tidak boleh tertangkap catch.
   redirect("/login");
 }

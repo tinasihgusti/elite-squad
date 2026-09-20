@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { TrackerForm } from "@/components/tracker/tracker-form";
 import { Alert } from "@/components/ui/alert";
+import { RenderError } from "@/components/ui/render-error";
 import { getProfile, getTrackerByWeek } from "@/lib/queries";
 import { isoWeekNumber } from "@/lib/utils";
 
@@ -15,7 +16,12 @@ export default async function TrackerPage({
 }) {
   const { week: weekParam } = await searchParams;
 
-  const profile = await getProfile();
+  let profile;
+  try {
+    profile = await getProfile();
+  } catch (error) {
+    return <RenderError where="data tracker" error={error} />;
+  }
   if (!profile) redirect("/login");
 
   const parsedWeek = Number(weekParam);
@@ -24,7 +30,12 @@ export default async function TrackerPage({
       ? parsedWeek
       : isoWeekNumber();
 
-  const existing = await getTrackerByWeek(week);
+  let existing;
+  try {
+    existing = await getTrackerByWeek(week);
+  } catch (error) {
+    return <RenderError where="isian tracker minggu ini" error={error} />;
+  }
 
   return (
     <div className="space-y-5">

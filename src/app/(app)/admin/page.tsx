@@ -5,6 +5,7 @@ import { AdjustmentLog } from "@/components/admin/adjustment-log";
 import { DramaInbox } from "@/components/admin/drama-inbox";
 import { ParticipantManager } from "@/components/admin/participant-manager";
 import { Card, CardHeader } from "@/components/ui/card";
+import { RenderError } from "@/components/ui/render-error";
 import {
   getAllDramaReports,
   getParticipants,
@@ -23,11 +24,16 @@ export default async function AdminPage() {
   // dan sekali lagi di setiap Server Action — halaman bukan satu-satunya gerbang.
   if (!staff) redirect("/dashboard");
 
-  const [participants, dramaReports, adjustments] = await Promise.all([
-    getParticipants(),
-    getAllDramaReports(),
-    getRecentAdjustments(),
-  ]);
+  let participants, dramaReports, adjustments;
+  try {
+    [participants, dramaReports, adjustments] = await Promise.all([
+      getParticipants(),
+      getAllDramaReports(),
+      getRecentAdjustments(),
+    ]);
+  } catch (error) {
+    return <RenderError where="data panel mentor" error={error} />;
+  }
 
   const members = participants.filter((p) => p.role === "member");
   const pendingDrama = dramaReports.filter((r) => !r.mentor_reply).length;

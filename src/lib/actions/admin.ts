@@ -15,29 +15,54 @@ import { idleState, zodToActionState, type ActionState } from "./types";
 async function requireStaff(): Promise<
   { ok: true; staff: ProfileRow } | { ok: false; state: ActionState }
 > {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { ok: false, state: { status: "error", message: "Sesi berakhir. Silakan login ulang." } };
+    if (!user) {
+      return {
+        ok: false,
+        state: { status: "error", message: "Sesi berakhir. Silakan login ulang." },
+      };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || (profile.role !== "mentor" && profile.role !== "admin")) {
+      return {
+        ok: false,
+        state: { status: "error", message: "Akses ditolak. Halaman ini khusus mentor/admin." },
+      };
+    }
+
+    return { ok: true, staff: profile };
+  } catch (error) {
+    return { ok: false, state: toActionState("requireStaff", error) };
   }
+}
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-
-  if (!profile || (profile.role !== "mentor" && profile.role !== "admin")) {
-    return {
-      ok: false,
-      state: { status: "error", message: "Akses ditolak. Halaman ini khusus mentor/admin." },
-    };
-  }
-
-  return { ok: true, staff: profile };
+/** Ubah apa pun yang dilempar menjadi pesan yang bisa dibaca di panel. */
+function toActionState(scope: string, error: unknown): ActionState {
+  console.error(`[${scope}]`, error);
+  const detail =
+    error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  return {
+    status: "error",
+    message: "Gagal memproses. Rincian teknisnya ada di bawah.",
+    detail: detail.slice(0, 500),
+  };
 }
 
 function refreshAdminPages() {
-  ["/admin", "/leaderboard", "/dashboard"].forEach((path) => revalidatePath(path));
+  // Hanya panel mentor yang daftarnya dirender server dan harus langsung
+  // berubah. Halaman lain force-dynamic, jadi sudah segar saat dibuka.
+  revalidatePath("/admin");
 }
 
 // ---------------------------------------------------------------------------
@@ -116,19 +141,24 @@ export async function revertAdjustmentAction(eventId: string): Promise<ActionSta
   const parsed = z.string().uuid().safeParse(eventId);
   if (!parsed.success) return { status: "error", message: "Penyesuaian tidak ditemukan." };
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("xp_events")
-    .delete()
-    .eq("id", parsed.data)
-    .eq("source", "admin_adjustment");
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("xp_events")
+      .delete()
+      .eq("id", parsed.data)
+      .eq("source", "admin_adjustment");
 
-  if (error) {
-    console.error("[revertAdjustmentAction]", error);
-    return { status: "error", message: "Gagal membatalkan penyesuaian." };
+    if (error) {
+      console.error("[revertAdjustmentAction]", error);
+      return { status: "error", message: "Gagal membatalkan penyesuaian." };
+    }
+
+    refreshAdminPages();
+  } catch (error) {
+    return toActionState("revertAdjustmentAction", error);
   }
 
-  refreshAdminPages();
   return { status: "success", message: "Penyesuaian dibatalkan." };
 }
 
@@ -146,21 +176,26 @@ export async function verifyModuleAction(
   const parsed = z.string().uuid().safeParse(completionId);
   if (!parsed.success) return { status: "error", message: "Data sesi tidak ditemukan." };
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("module_completions")
-    .update({
-      verified_by: verified ? gate.staff.id : null,
-      verified_at: verified ? new Date().toISOString() : null,
-    })
-    .eq("id", parsed.data);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("module_completions")
+      .update({
+        verified_by: verified ? gate.staff.id : null,
+        verified_at: verified ? new Date().toISOString() : null,
+      })
+      .eq("id", parsed.data);
 
-  if (error) {
-    console.error("[verifyModuleAction]", error);
-    return { status: "error", message: "Gagal memperbarui verifikasi." };
+    if (error) {
+      console.error("[verifyModuleAction]", error);
+      return { status: "error", message: "Gagal memperbarui verifikasi." };
+    }
+
+    refreshAdminPages();
+  } catch (error) {
+    return toActionState("verifyModuleAction", error);
   }
 
-  refreshAdminPages();
   return { status: "success", message: verified ? "Kehadiran diverifikasi." : "Verifikasi dicabut." };
 }
 
@@ -172,15 +207,20 @@ export async function revokeModuleAction(completionId: string): Promise<ActionSt
   const parsed = z.string().uuid().safeParse(completionId);
   if (!parsed.success) return { status: "error", message: "Data sesi tidak ditemukan." };
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("module_completions").delete().eq("id", parsed.data);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("module_completions").delete().eq("id", parsed.data);
 
-  if (error) {
-    console.error("[revokeModuleAction]", error);
-    return { status: "error", message: "Gagal mencabut kehadiran sesi." };
+    if (error) {
+      console.error("[revokeModuleAction]", error);
+      return { status: "error", message: "Gagal mencabut kehadiran sesi." };
+    }
+
+    refreshAdminPages();
+  } catch (error) {
+    return toActionState("revokeModuleAction", error);
   }
 
-  refreshAdminPages();
   return { status: "success", message: "Kehadiran sesi dicabut beserta XP-nya." };
 }
 
@@ -207,23 +247,28 @@ export async function replyDramaAction(
   const parsed = replySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return zodToActionState(parsed.error.flatten().fieldErrors);
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("drama_reports")
-    .update({
-      mentor_reply: parsed.data.reply,
-      replied_by: gate.staff.id,
-      replied_at: new Date().toISOString(),
-    })
-    .eq("id", parsed.data.reportId);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("drama_reports")
+      .update({
+        mentor_reply: parsed.data.reply,
+        replied_by: gate.staff.id,
+        replied_at: new Date().toISOString(),
+      })
+      .eq("id", parsed.data.reportId);
 
-  if (error) {
-    console.error("[replyDramaAction]", error);
-    return { status: "error", message: "Gagal mengirim balasan." };
+    if (error) {
+      console.error("[replyDramaAction]", error);
+      return { status: "error", message: "Gagal mengirim balasan." };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/drama");
+  } catch (error) {
+    return toActionState("replyDramaAction", error);
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/drama");
   return { status: "success", message: "Balasan terkirim ke peserta." };
 }
 

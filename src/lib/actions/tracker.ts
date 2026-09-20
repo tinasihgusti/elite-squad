@@ -73,7 +73,7 @@ export async function submitTrackerAction(
     return { status: "error", message: "Gagal terhubung ke server. Periksa koneksi lalu coba lagi." };
   }
 
-  revalidatePath("/dashboard");
+  // Halaman lain force-dynamic, jadi sudah segar saat dibuka.
   revalidatePath("/tracker");
   revalidatePath("/rekap");
 
