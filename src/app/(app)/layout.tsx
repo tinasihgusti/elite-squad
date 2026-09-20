@@ -1,11 +1,22 @@
 import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { RenderError } from "@/components/ui/render-error";
 import { logoutAction } from "@/lib/actions/auth";
 import { getProfile } from "@/lib/queries";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const profile = await getProfile();
+  let profile;
+  try {
+    profile = await getProfile();
+  } catch (error) {
+    return (
+      <main className="mx-auto w-full max-w-2xl px-5 py-12">
+        <RenderError where="profil pengguna" error={error} />
+      </main>
+    );
+  }
+
 
   // JANGAN redirect ke /login di sini. User yang sampai ke titik ini sudah punya
   // sesi valid — middleware akan memantulkannya kembali ke /dashboard, dan

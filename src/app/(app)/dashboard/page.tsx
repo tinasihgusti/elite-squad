@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { LevelCard } from "@/components/gamification/level-card";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { RenderError } from "@/components/ui/render-error";
 import {
   XP_SOURCE_LABEL,
   getAmalItems,
@@ -28,18 +29,23 @@ const QUICK_ACTIONS = [
 ];
 
 export default async function DashboardPage() {
-  const [profile, progress, levels, amalItems, amalToday, today, trackers, xpHistory, daily] =
-    await Promise.all([
-      getProfile(),
-      getMissionProgress(),
-      getLevels(),
-      getAmalItems(),
-      getTodayAmalKeys(),
-      getToday(),
-      getMyTrackers(),
-      getMyXpHistory(8),
-      getLeaderboard("daily", 100),
-    ]);
+  let profile, progress, levels, amalItems, amalToday, today, trackers, xpHistory, daily;
+  try {
+    [profile, progress, levels, amalItems, amalToday, today, trackers, xpHistory, daily] =
+      await Promise.all([
+        getProfile(),
+        getMissionProgress(),
+        getLevels(),
+        getAmalItems(),
+        getTodayAmalKeys(),
+        getToday(),
+        getMyTrackers(),
+        getMyXpHistory(8),
+        getLeaderboard("daily", 100),
+      ]);
+  } catch (error) {
+    return <RenderError where="data dashboard" error={error} />;
+  }
 
   const currentWeek = isoWeekNumber();
   const thisWeek = trackers.find((t) => t.week_number === currentWeek);

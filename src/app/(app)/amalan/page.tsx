@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AmalChecklist } from "@/components/gamification/amal-checklist";
 import { Card, CardHeader } from "@/components/ui/card";
+import { RenderError } from "@/components/ui/render-error";
 import { getAmalItems, getMissionProgress, getToday, getTodayAmalKeys } from "@/lib/gamification";
 import { formatDate } from "@/lib/utils";
 
@@ -11,12 +12,17 @@ export const metadata: Metadata = { title: "Amalan Yaumi" };
 export const dynamic = "force-dynamic";
 
 export default async function AmalanPage() {
-  const [items, checkedKeys, today, progress] = await Promise.all([
-    getAmalItems(),
-    getTodayAmalKeys(),
-    getToday(),
-    getMissionProgress(),
-  ]);
+  let items, checkedKeys, today, progress;
+  try {
+    [items, checkedKeys, today, progress] = await Promise.all([
+      getAmalItems(),
+      getTodayAmalKeys(),
+      getToday(),
+      getMissionProgress(),
+    ]);
+  } catch (error) {
+    return <RenderError where="data amalan yaumi" error={error} />;
+  }
 
   return (
     <div className="space-y-5">

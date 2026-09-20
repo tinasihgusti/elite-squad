@@ -8,6 +8,20 @@ import { idleState, zodToActionState, type ActionState } from "./types";
 
 const GAME_PATHS = ["/dashboard", "/amalan", "/misi", "/drama", "/leaderboard"];
 
+/**
+ * Menyegarkan halaman-halaman yang menampilkan XP.
+ *
+ * Hanya dipakai untuk aksi berbasis form (kirim laporan, simpan tracker), yang
+ * hasilnya memang harus langsung terlihat pada daftar yang dirender server.
+ *
+ * TIDAK dipakai pada ceklis amalan dan modul. Ceklis sudah memperbarui
+ * tampilannya sendiri secara optimistik, sementara seluruh halaman ini
+ * `force-dynamic` alias tidak pernah di-cache — jadi revalidasi tidak
+ * menambah kesegaran apa pun. Yang ia lakukan justru menyeret render ulang
+ * seluruh halaman ke dalam respons setiap klik: sembilan kali lipat beban
+ * server per peserta per hari, dan satu kegagalan render di sana membuat
+ * klik yang sebenarnya berhasil tampak gagal.
+ */
 function refreshGamePages() {
   GAME_PATHS.forEach((path) => revalidatePath(path));
 }
@@ -99,8 +113,6 @@ export async function toggleAmalAction(habitKey: string, checked: boolean): Prom
 
       if (error) return fromSupabaseError("toggleAmalAction:delete", error);
     }
-
-    refreshGamePages();
   } catch (error) {
     return toActionState("toggleAmalAction", error);
   }
@@ -141,8 +153,6 @@ export async function toggleModuleAction(
 
       if (error) return fromSupabaseError("toggleModuleAction:delete", error);
     }
-
-    refreshGamePages();
   } catch (error) {
     return toActionState("toggleModuleAction", error);
   }

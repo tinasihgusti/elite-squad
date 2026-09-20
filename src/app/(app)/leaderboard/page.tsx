@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Card } from "@/components/ui/card";
+import { RenderError } from "@/components/ui/render-error";
 import { getLeaderboard } from "@/lib/gamification";
 import { getProfile } from "@/lib/queries";
 import { cn, initials } from "@/lib/utils";
@@ -33,7 +34,12 @@ export default async function LeaderboardPage({
   const scope: LeaderboardScope = isScope(scopeParam) ? scopeParam : "daily";
   const active = SCOPES.find((s) => s.key === scope)!;
 
-  const [rows, profile] = await Promise.all([getLeaderboard(scope, 100), getProfile()]);
+  let rows, profile;
+  try {
+    [rows, profile] = await Promise.all([getLeaderboard(scope, 100), getProfile()]);
+  } catch (error) {
+    return <RenderError where="leaderboard" error={error} />;
+  }
   const myRow = rows.find((row) => row.user_id === profile?.id);
 
   return (

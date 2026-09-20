@@ -2,13 +2,19 @@ import type { Metadata } from "next";
 
 import { DramaForm } from "@/components/drama/drama-form";
 import { DramaList } from "@/components/drama/drama-list";
+import { RenderError } from "@/components/ui/render-error";
 import { getMyDramaReports, getToday } from "@/lib/gamification";
 
 export const metadata: Metadata = { title: "Maba Drama Box" };
 export const dynamic = "force-dynamic";
 
 export default async function DramaPage() {
-  const [reports, today] = await Promise.all([getMyDramaReports(), getToday()]);
+  let reports, today;
+  try {
+    [reports, today] = await Promise.all([getMyDramaReports(), getToday()]);
+  } catch (error) {
+    return <RenderError where="laporan Maba Drama" error={error} />;
+  }
   const alreadyEarnedToday = reports.some((r) => r.reported_on === today);
 
   return (

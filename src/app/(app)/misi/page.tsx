@@ -4,6 +4,7 @@ import { LevelCard } from "@/components/gamification/level-card";
 import { ModuleList } from "@/components/gamification/module-list";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { RenderError } from "@/components/ui/render-error";
 import {
   getLevels,
   getMissionProgress,
@@ -16,13 +17,18 @@ export const metadata: Metadata = { title: "Misi & Modul" };
 export const dynamic = "force-dynamic";
 
 export default async function MisiPage() {
-  const [profile, progress, levels, sessions, completions] = await Promise.all([
-    getProfile(),
-    getMissionProgress(),
-    getLevels(),
-    getModuleSessions(),
-    getMyModuleCompletions(),
-  ]);
+  let profile, progress, levels, sessions, completions;
+  try {
+    [profile, progress, levels, sessions, completions] = await Promise.all([
+      getProfile(),
+      getMissionProgress(),
+      getLevels(),
+      getModuleSessions(),
+      getMyModuleCompletions(),
+    ]);
+  } catch (error) {
+    return <RenderError where="data misi & modul" error={error} />;
+  }
 
   const minAttendance = Math.ceil(sessions.length * 0.8);
   const sessionsLeft = Math.max(0, minAttendance - (progress?.sessions_done ?? 0));
