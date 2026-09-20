@@ -32,6 +32,22 @@ function translateAuthError(message: string): { message: string; detail?: string
   if (m.includes("rate limit") || m.includes("too many") || m.includes("for security purposes"))
     return { message: "Terlalu banyak percobaan. Tunggu sekitar satu menit lalu coba lagi." };
 
+  // Sangat umum di free tier: SMTP bawaan Supabase dibatasi beberapa email
+  // per jam, dan pendaftaran ikut gagal kalau emailnya tidak terkirim.
+  if (
+    m.includes("error sending") ||
+    m.includes("confirmation email") ||
+    m.includes("smtp") ||
+    m.includes("email provider")
+  )
+    return {
+      message:
+        "Akun tidak bisa dibuat karena email konfirmasi gagal dikirim. SMTP bawaan Supabase " +
+        "dibatasi beberapa email per jam. Pasang custom SMTP, atau matikan konfirmasi email " +
+        "di Authentication → Sign In / Providers → Email → Confirm email.",
+      detail: message,
+    };
+
   // Penyebab paling umum saat pertama kali deploy: migrasi SQL belum dijalankan,
   // atau trigger pembuat profil error sehingga seluruh pendaftaran ikut gagal.
   if (m.includes("database error"))

@@ -240,6 +240,11 @@ Supabase, jadi penyebabnya langsung kelihatan. Tiga yang paling sering:
 | &ldquo;Database Supabase belum siap&rdquo; | Migrasi SQL belum dijalankan sampai selesai | Jalankan 0001 → 0002 → 0003, cek di `/setup-check` |
 | &ldquo;Pendaftaran sedang dimatikan&rdquo; | Signup dimatikan di dashboard | Authentication → Sign In / Providers → Email → *Allow new users to sign up* |
 | &ldquo;URL redirect belum diizinkan&rdquo; | Domain Vercel belum didaftarkan | Authentication → URL Configuration → tambahkan `https://<domain>/auth/callback` |
+| &ldquo;email konfirmasi gagal dikirim&rdquo; | SMTP bawaan Supabase kena batas kirim | Pasang custom SMTP, atau matikan *Confirm email* |
+
+Untuk memastikan bagian mana yang belum terpasang di database, tempel
+[`supabase/check-install.sql`](supabase/check-install.sql) ke SQL Editor. Skrip
+itu hanya membaca, dan tetap jalan walau databasenya masih kosong.
 
 Pendaftaran tidak lagi bisa digagalkan oleh trigger pembuat profil: kalau
 pembuatan profil bermasalah, akun tetap jadi dan aplikasi membuat profilnya
