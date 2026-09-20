@@ -72,6 +72,22 @@ select * from (
             else (select count(*)::text || ' policy terpasang' from pg_policies
                   where schemaname = 'public' and tablename = 'profiles') end),
 
+    (4, 'MIGRASI 0004', 'Kolom profiles lengkap',
+       case when to_regclass('public.profiles') is null then '❌ BELUM'
+            when (select count(*) from information_schema.columns
+                  where table_schema = 'public' and table_name = 'profiles'
+                    and column_name in ('id','full_name','squad','faculty','phone',
+                                        'role','created_at','updated_at')) = 8
+            then '✅ SIAP' else '🔴 KURANG' end,
+       case when to_regclass('public.profiles') is null then 'tabel belum ada'
+            else coalesce((
+              select string_agg(k, ', ')
+              from unnest(array['id','full_name','squad','faculty','phone',
+                                'role','created_at','updated_at']) as k
+              where k not in (select column_name from information_schema.columns
+                              where table_schema = 'public' and table_name = 'profiles')
+            ), 'semua kolom ada') end),
+
     (5, 'DATA AKUN', 'Akun terdaftar (auth.users)',
        'ℹ️ INFO', coalesce(pg_temp.hitung('auth.users')::text, '-')),
     (5, 'DATA AKUN', 'Profil terbentuk (public.profiles)',

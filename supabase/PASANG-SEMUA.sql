@@ -50,6 +50,70 @@ create table if not exists public.profiles (
   updated_at  timestamptz not null default now()
 );
 
+-- ---------- Rekonsiliasi kolom `profiles` ----------
+-- `create table if not exists` DIAM SAJA kalau tabelnya sudah ada, walau
+-- bentuknya berbeda. Kalau `profiles` pernah dibuat skrip lain (misalnya
+-- contoh bawaan dokumentasi Supabase yang hanya punya id/full_name/avatar_url),
+-- kolom yang kurang tidak akan pernah terbentuk, dan error-nya baru muncul
+-- jauh di belakang sebagai "column p.phone does not exist".
+-- Blok ini menambal kolom yang hilang tanpa menyentuh data yang sudah ada.
+
+alter table public.profiles add column if not exists full_name  text;
+alter table public.profiles add column if not exists squad      text;
+alter table public.profiles add column if not exists faculty    text;
+alter table public.profiles add column if not exists phone      text;
+alter table public.profiles add column if not exists role       public.user_role;
+alter table public.profiles add column if not exists created_at timestamptz;
+alter table public.profiles add column if not exists updated_at timestamptz;
+
+-- Kalau `role` terlanjur bertipe text, ubah ke enum user_role.
+do $$
+declare
+  v_type text;
+begin
+  select udt_name into v_type
+  from information_schema.columns
+  where table_schema = 'public' and table_name = 'profiles' and column_name = 'role';
+
+  if v_type is not null and v_type <> 'user_role' then
+    execute 'update public.profiles set role = ''member''
+             where role is null or role::text not in (''member'', ''mentor'', ''admin'')';
+    execute 'alter table public.profiles alter column role drop default';
+    execute 'alter table public.profiles alter column role type public.user_role
+             using role::text::public.user_role';
+  end if;
+end $$;
+
+-- Isi nilai yang kosong supaya constraint NOT NULL bisa dipasang.
+update public.profiles
+   set full_name = coalesce(nullif(trim(full_name), ''), 'Peserta')
+ where full_name is null or trim(full_name) = '';
+
+update public.profiles
+   set full_name = trim(full_name) || ' Peserta'
+ where char_length(trim(full_name)) < 2;
+
+update public.profiles set role       = 'member' where role       is null;
+update public.profiles set created_at = now()    where created_at is null;
+update public.profiles set updated_at = now()    where updated_at is null;
+
+alter table public.profiles alter column full_name  set not null;
+alter table public.profiles alter column role       set default 'member';
+alter table public.profiles alter column role       set not null;
+alter table public.profiles alter column created_at set default now();
+alter table public.profiles alter column created_at set not null;
+alter table public.profiles alter column updated_at set default now();
+alter table public.profiles alter column updated_at set not null;
+
+do $$ begin
+  alter table public.profiles
+    add constraint profiles_full_name_check
+    check (char_length(trim(full_name)) between 2 and 120);
+exception
+  when duplicate_object then null;
+  when duplicate_table  then null;
+end $$;
+
 -- ---------- Tabel: weekly_trackers ----------
 create table if not exists public.weekly_trackers (
   id                uuid primary key default gen_random_uuid(),

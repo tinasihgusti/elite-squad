@@ -43,3 +43,11 @@ membocorkan data (anonim bisa membaca seluruh nama dan nomor WhatsApp, dan
 peserta tanpa profil bisa mengangkat dirinya jadi admin lalu membaca laporan
 Maba Drama orang lain), lalu membuktikan migrasi 0004 menutup keduanya tanpa
 merusak pendaftaran normal maupun pengangkatan mentor.
+
+`05` — skenario tabel `profiles` yang sudah terlanjur dibuat skrip lain dengan
+bentuk berbeda (mis. contoh bawaan dokumentasi Supabase: id/username/full_name/
+avatar_url/website). `create table if not exists` diam saja pada kasus ini,
+sehingga kolom `phone`, `squad`, `faculty`, dan `role` tidak pernah terbentuk
+dan error baru muncul jauh di belakang sebagai `column p.phone does not exist`.
+Diuji: kolom yang hilang ditambal, kolom lama dibiarkan, data lama utuh, dan
+kolom `role` bertipe text ikut dikonversi ke enum `user_role`.
