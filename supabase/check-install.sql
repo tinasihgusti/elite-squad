@@ -4,32 +4,14 @@
 -- Tempel seluruh isi file ini ke Supabase → SQL Editor → Run.
 -- Aman dijalankan kapan saja: hanya membaca, tidak mengubah apa pun,
 -- dan tetap jalan walau databasenya masih benar-benar kosong.
+--
+-- Seluruh hasil muncul dalam SATU tabel, karena SQL Editor hanya
+-- menampilkan hasil perintah terakhir.
 -- =====================================================================
 
-select
-  item,
-  case when ready then '✅ SIAP' else '❌ BELUM' end as status,
-  keterangan
-from (
-  values
-    ('Tabel profiles',          to_regclass('public.profiles')          is not null, 'dibuat oleh 0001_init.sql'),
-    ('Tabel weekly_trackers',   to_regclass('public.weekly_trackers')   is not null, 'dibuat oleh 0001_init.sql'),
-    ('Trigger profil otomatis',
-      exists (select 1 from pg_trigger where tgname = 'on_auth_user_created' and not tgisinternal),
-      'dibuat oleh 0001, diperkuat oleh 0003'),
-    ('Tabel xp_events',         to_regclass('public.xp_events')         is not null, 'dibuat oleh 0002_gamification.sql'),
-    ('Tabel daily_amal_logs',   to_regclass('public.daily_amal_logs')   is not null, 'dibuat oleh 0002_gamification.sql'),
-    ('Tabel module_sessions',   to_regclass('public.module_sessions')   is not null, 'dibuat oleh 0002_gamification.sql'),
-    ('Tabel drama_reports',     to_regclass('public.drama_reports')     is not null, 'dibuat oleh 0002_gamification.sql'),
-    ('Fungsi leaderboard',      to_regprocedure('public.leaderboard(text,int)') is not null, 'dibuat oleh 0002_gamification.sql'),
-    ('Fungsi ensure_profile',   to_regprocedure('public.ensure_profile()')      is not null, 'dibuat oleh 0003_signup_hardening.sql'),
-    ('Fungsi setup_status',     to_regprocedure('public.setup_status()')        is not null, 'dibuat oleh 0003_signup_hardening.sql')
-) as t(item, ready, keterangan);
-
--- Hitungan baris. Memakai fungsi sementara (pg_temp) supaya tetap aman
--- dijalankan walau tabelnya belum ada — sebuah SELECT biasa akan gagal saat
--- di-parse, bukan saat dijalankan, jadi CASE tidak cukup.
--- Fungsi ini hilang sendiri begitu sesi SQL Editor ditutup.
+-- Fungsi bantu sementara: menghitung baris tanpa error kalau tabelnya
+-- belum ada. SELECT biasa gagal saat di-parse, bukan saat dijalankan,
+-- sehingga CASE tidak cukup. Fungsi ini hilang sendiri saat tab ditutup.
 create or replace function pg_temp.hitung(p_relasi text)
 returns bigint
 language plpgsql
@@ -44,13 +26,55 @@ begin
 end;
 $$;
 
--- Berapa akun yang sudah terdaftar, dan berapa profilnya?
-select
-  pg_temp.hitung('auth.users')      as jumlah_akun,
-  pg_temp.hitung('public.profiles') as jumlah_profil;
+select * from (
+  values
+    (1, 'MIGRASI 0001', 'Tabel profiles',
+       case when to_regclass('public.profiles')        is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (1, 'MIGRASI 0001', 'Tabel weekly_trackers',
+       case when to_regclass('public.weekly_trackers') is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (1, 'MIGRASI 0001', 'Trigger profil otomatis',
+       case when exists (select 1 from pg_trigger where tgname = 'on_auth_user_created' and not tgisinternal)
+            then '✅ SIAP' else '❌ BELUM' end, ''),
 
--- Isi data referensi (harus 9 amalan, 10 sesi, 5 level setelah 0002 jalan).
-select
-  pg_temp.hitung('public.amal_items')      as amalan_yaumi,
-  pg_temp.hitung('public.module_sessions') as sesi_modul,
-  pg_temp.hitung('public.levels')          as level;
+    (2, 'MIGRASI 0002', 'Tabel xp_events',
+       case when to_regclass('public.xp_events')       is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (2, 'MIGRASI 0002', 'Tabel daily_amal_logs',
+       case when to_regclass('public.daily_amal_logs') is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (2, 'MIGRASI 0002', 'Tabel module_sessions',
+       case when to_regclass('public.module_sessions') is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (2, 'MIGRASI 0002', 'Tabel drama_reports',
+       case when to_regclass('public.drama_reports')   is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (2, 'MIGRASI 0002', 'Fungsi leaderboard',
+       case when to_regprocedure('public.leaderboard(text,int)') is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (2, 'MIGRASI 0002', 'Data amalan yaumi (harus 9)',
+       case when coalesce(pg_temp.hitung('public.amal_items'), 0) >= 9 then '✅ SIAP' else '❌ BELUM' end,
+       coalesce(pg_temp.hitung('public.amal_items')::text, 'tabel belum ada')),
+    (2, 'MIGRASI 0002', 'Data sesi modul (harus 10)',
+       case when coalesce(pg_temp.hitung('public.module_sessions'), 0) >= 10 then '✅ SIAP' else '❌ BELUM' end,
+       coalesce(pg_temp.hitung('public.module_sessions')::text, 'tabel belum ada')),
+    (2, 'MIGRASI 0002', 'Data level (harus 5)',
+       case when coalesce(pg_temp.hitung('public.levels'), 0) >= 5 then '✅ SIAP' else '❌ BELUM' end,
+       coalesce(pg_temp.hitung('public.levels')::text, 'tabel belum ada')),
+
+    (3, 'MIGRASI 0003', 'Fungsi ensure_profile',
+       case when to_regprocedure('public.ensure_profile()') is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+    (3, 'MIGRASI 0003', 'Fungsi setup_status',
+       case when to_regprocedure('public.setup_status()')   is not null then '✅ SIAP' else '❌ BELUM' end, ''),
+
+    (4, 'MIGRASI 0004', 'Policy profiles sudah aman',
+       case when to_regclass('public.profiles') is null then '❌ BELUM'
+            when exists (
+              select 1 from pg_policies
+              where schemaname = 'public' and tablename = 'profiles'
+                and (qual = 'true' or with_check = 'true')
+            ) then '🔴 TERBUKA' else '✅ SIAP' end,
+       case when to_regclass('public.profiles') is null then 'tabel belum ada'
+            else (select count(*)::text || ' policy terpasang' from pg_policies
+                  where schemaname = 'public' and tablename = 'profiles') end),
+
+    (5, 'DATA AKUN', 'Akun terdaftar (auth.users)',
+       'ℹ️ INFO', coalesce(pg_temp.hitung('auth.users')::text, '-')),
+    (5, 'DATA AKUN', 'Profil terbentuk (public.profiles)',
+       'ℹ️ INFO', coalesce(pg_temp.hitung('public.profiles')::text, 'tabel belum ada'))
+) as t(urutan, bagian, item, status, keterangan)
+order by urutan, item;
