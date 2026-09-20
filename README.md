@@ -126,12 +126,21 @@ npm install
 
 ### 3. Jalankan skema database
 
-Buka **SQL Editor** di dashboard Supabase, lalu jalankan **berurutan**:
+Buka **SQL Editor** di dashboard Supabase.
+
+**Cara cepat (disarankan):** copy seluruh isi
+[`supabase/PASANG-SEMUA.sql`](supabase/PASANG-SEMUA.sql), tempel, lalu **Run**.
+File itu berisi gabungan seluruh migrasi dalam urutan yang benar.
+
+**Cara manual:** jalankan satu per satu, berurutan:
 
 1. [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) — profil, tracker mingguan, RLS dasar
 2. [`supabase/migrations/0002_gamification.sql`](supabase/migrations/0002_gamification.sql) — XP, level, amalan yaumi, kurikulum 10 sesi, Maba Drama, leaderboard, panel mentor
 3. [`supabase/migrations/0003_signup_hardening.sql`](supabase/migrations/0003_signup_hardening.sql) — pengaman pendaftaran dan pemeriksa instalasi
 4. [`supabase/migrations/0004_repair_open_policies.sql`](supabase/migrations/0004_repair_open_policies.sql) — menutup policy `profiles` yang terlalu terbuka
+
+Semuanya aman dijalankan berulang kali. Pesan `NOTICE: ... does not exist,
+skipping` itu normal.
 
 > **Jangan menjalankan policy RLS dari sumber lain di tabel `profiles`.** Policy
 > RLS bersifat *permissive* dan di-OR: satu policy `using (true)` saja sudah
@@ -140,11 +149,12 @@ Buka **SQL Editor** di dashboard Supabase, lalu jalankan **berurutan**:
 > memang publik, tertanam di bundle JavaScript. Migrasi 0004 menutupnya kembali
 > dan aman dijalankan kapan saja.
 
-Setelah selesai, buka **`/setup-check`** di aplikasi. Semua baris harus berstatus
-&ldquo;Siap&rdquo;. Halaman itu bisa dibuka tanpa login dan tidak menampilkan data apa pun.
+Setelah selesai, jalankan [`supabase/check-install.sql`](supabase/check-install.sql)
+di SQL Editor. Seluruh baris harus `✅ SIAP`. Halaman **`/setup-check`** di
+aplikasi menampilkan informasi yang sama.
 
-Kedua skrip idempoten (aman dijalankan ulang) dan sudah berisi seluruh data
-referensi: 5 level, 9 amalan yaumi, dan 10 sesi modul lengkap dengan indikator Juklak.
+> Kalau ada migrasi baru ditambahkan ke `supabase/migrations/`, bangkitkan ulang
+> file gabungannya: `bash scripts/build-pasang-semua.sh`
 
 ### 4. Atur environment variable
 
